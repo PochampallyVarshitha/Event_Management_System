@@ -1,0 +1,58 @@
+{
+  "users": [
+    {
+      "id": 1761857105749,
+      "name": "Pochampally Varshitha",
+      "email": "2303a51160@sru.edu.in",
+      "passwordHash": "$2b$10$AwaXwQpqHummqZuvWRfGWOXdJ3EGwOxzFz.Rq0QxHV6K/3E97PbSu",
+      "role": "user",
+      "createdAt": "2025-10-30T20:45:05.749Z"
+    },
+    {
+      "id": 1761857232257,
+      "name": "varshitha pochampally",
+      "email": "varshithapochampalli4@gmail.com",
+      "passwordHash": "$2b$10$s7EN3/V3ZeJQQPFISiMPauoVEpztdxqVCu0HDuhBuFy8Jn.Gyq3iG",
+      "role": "admin",
+      "createdAt": "2025-10-30T20:47:12.258Z"
+    },
+    {
+      "id": 1761857946687,
+      "name": "Mamidala Niharika",
+      "email": "2303a51150@sru.edu.in",
+      "passwordHash": "$2b$10$XojWNVluis.IMgZ6jq58oewL.7QE07D5MkeRBpWJ1T08.ofA4WQfm",
+      "role": "user",
+      "createdAt": "2025-10-30T20:59:06.687Z"
+    }
+  ],
+  "events": [
+    {
+      "id": 1761905899923,
+      "title": "sru idea conclave 1",
+      "date": "2025-01-04T09:30:00.000Z",
+      "venue": "1st block",
+      "description": "tech event",
+      "category": "Technical",
+      "createdBy": "varshithapochampalli4@gmail.com"
+    },
+    {
+      "id": 1761905901607,
+      "title": "sru idea conclave ",
+      "date": "2025-11-04T05:00:00.000Z",
+      "venue": "1st block",
+      "description": "tech event",
+      "category": "Technical",
+      "createdBy": "varshithapochampalli4@gmail.com"
+    },
+    {
+      "id": 1761907282613,
+      "title": "yatra expo",
+      "date": "2025-10-31T06:00:00.000Z",
+      "venue": "3rd block",
+      "description": "efjndshbfvn",
+      "category": "Fest",
+      "createdBy": "varshithapochampalli4@gmail.com"
+    }
+  ],
+  "registrations": []
+}

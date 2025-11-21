@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Admin Dashboard — College Events</title>
+
+<style>
+:root {
+  --purple: #6b21a8;
+  --purple-glow: rgba(139,70,255,0.45);
+  --card-bg: rgba(255,255,255,0.6);
+  --shadow: 0 8px 25px rgba(0,0,0,0.12);
+  --text-dark: #222;
+  --muted: #555;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, Arial, sans-serif;
+  background: #f5f4ff;
+  color: var(--text-dark);
+}
+
+/* HEADER */
+header {
+  background: var(--purple);
+  padding: 14px 30px;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+}
+
+header h1 { margin: 0; font-size: 22px; }
+
+#adminEmail { font-weight: bold; }
+
+/* WRAPPER */
+.wrap { max-width: 1050px; margin: 28px auto; padding: 16px; }
+
+/* GLASS CARD */
+.card {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: var(--shadow), 0 0 25px var(--purple-glow);
+  margin-top: 18px;
+  transition: 0.4s;
+}
+.card:hover { box-shadow: var(--shadow), 0 0 40px var(--purple-glow); }
+
+/* FORM */
+input, select, textarea {
+  padding: 9px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  width: 100%;
+}
+
+button {
+  background: var(--purple);
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: 0.25s;
+}
+button:hover {
+  box-shadow: 0 0 14px var(--purple-glow);
+  transform: scale(1.03);
+}
+
+/* EVENT CARDS */
+.event {
+  background: white;
+  border-radius: 14px;
+  padding: 16px;
+  margin-top: 14px;
+  box-shadow: var(--shadow);
+  transition: 0.3s;
+}
+.event:hover {
+  box-shadow: 0 0 30px var(--purple-glow);
+  transform: translateY(-3px);
+}
+
+.row { display: flex; gap: 8px; margin-top: 10px; }
+
+/* GRID */
+.grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); gap: 18px; }
+
+/* FOOTER */
+footer {
+  background: var(--purple);
+  color: white;
+  text-align: center;
+  padding: 10px;
+  margin-top: 40px;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  box-shadow: 0 -4px 18px rgba(0,0,0,0.25);
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Admin Dashboard</h1>
+  <div>
+    <div id="adminEmail"></div>
+    <button id="logout" style="margin-top:6px;">Logout</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- Create/Edit Event -->
+  <section class="card">
+    <h2 style="margin:0;">Create / Edit Event</h2>
+    <form id="eventForm" style="margin-top:12px;display:grid;gap:10px">
+      <input id="title" placeholder="Event Title" required />
+      <input id="date" type="datetime-local" required />
+      <input id="venue" placeholder="Venue" required />
+      <select id="category">
+        <option>Cultural</option><option>Technical</option><option>Sports</option>
+        <option>Workshop</option><option>Seminar</option><option>Fest</option>
+      </select>
+      <textarea id="desc" rows="3" placeholder="Description"></textarea>
+      <div class="row"><button type="submit">Save</button><button type="button" id="reset">Reset</button></div>
+    </form>
+  </section>
+
+  <!-- All Events -->
+  <section style="margin-top:20px">
+    <h2>All Events</h2>
+    <div id="eventsArea" class="grid"></div>
+  </section>
+
+  <!-- Registrations -->
+  <section class="card" style="margin-top:20px">
+    <h2>All Registrations</h2>
+    <div id="regsArea" style="color:var(--muted)">No registrations yet.</div>
+  </section>
+
+</div>
+
+<footer>© 2025 College Event System — Admin Panel</footer>
+
+<script>
+const API = 'http://localhost:4000';
+let admin = localStorage.getItem('ces_current_user');
+if(!admin){ const em = prompt('Enter admin email:'); if(!em) location.href='index.html'; admin = em.toLowerCase(); localStorage.setItem('ces_current_user', admin); }
+document.getElementById('adminEmail').textContent = admin;
+
+let editingId = null;
+
+async function loadEvents(){ const r = await fetch(API + '/events'); const j = await r.json(); return j.events||[]; }
+async function renderEvents(){
+  const events = await loadEvents();
+  const area = document.getElementById('eventsArea');
+  if(!events.length) return area.innerHTML = '<div>No events</div>';
+  area.innerHTML = events.map(ev=>`
+    <div class="event">
+      <strong>${ev.title}</strong>
+      <div>${new Date(ev.date).toLocaleString()} — ${ev.venue}</div>
+      <div>${ev.category||''}</div>
+      <p>${ev.description||''}</p>
+      <div class="row">
+        <button class="edit" data-id="${ev.id}">Edit</button>
+        <button class="del" data-id="${ev.id}">Delete</button>
+        <button class="view" data-id="${ev.id}">View Registrations</button>
+      </div>
+    </div>`).join('');
+  area.querySelectorAll('.edit').forEach(b=> b.onclick=()=>startEdit(b.dataset.id));
+  area.querySelectorAll('.del').forEach(b=> b.onclick=()=>deleteEvent(b.dataset.id));
+  area.querySelectorAll('.view').forEach(b=> b.onclick=()=>viewRegs(b.dataset.id));
+}
+
+function startEdit(id){
+  loadEvents().then(events=>{
+    const ev = events.find(e=>e.id==id);
+    editingId=id;
+    title.value=ev.title; date.value=new Date(ev.date).toISOString().slice(0,16);
+    venue.value=ev.venue; category.value=ev.category; desc.value=ev.description;
+  });
+}
+
+async function deleteEvent(id){ if(!confirm('Delete event?')) return;
+  await fetch(API+'/events/'+id,{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({adminEmail:admin})});
+  renderEvents(); loadAllRegs();
+}
+
+async function viewRegs(id){
+  const r = await fetch(API + `/events/${id}/registrations?adminEmail=${admin}`);
+  const j = await r.json();
+  if(!j.registrations.length) return alert('No registrations');
+  alert(j.registrations.map(r=>`${r.name} (${r.email})`).join("\n"));
+}
+
+async function loadAllRegs(){
+  const r = await fetch(API+`/registrations?adminEmail=${admin}`);
+  const j = await r.json();
+  regsArea.innerHTML = j.registrations.length
+   ? j.registrations.map(r=>`${r.name} — ${r.email}`).join("<br>")
+   : "No registrations";
+}
+
+eventForm.onsubmit = async e=>{
+  e.preventDefault();
+  const body={adminEmail:admin,title:title.value,date:new Date(date.value).toISOString(),venue:venue.value,description:desc.value,category:category.value};
+  await fetch(API+'/events'+(editingId?'/'+editingId:''),{method:editingId?'PUT':'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+  editingId=null; eventForm.reset(); renderEvents();
+};
+reset.onclick=()=>{editingId=null;eventForm.reset();}
+logout.onclick=()=>{localStorage.removeItem('ces_current_user');location.href='index.html';};
+
+renderEvents(); loadAllRegs();
+</script>
+</body>
+</html>

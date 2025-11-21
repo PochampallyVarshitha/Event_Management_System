@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>College Event System - Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #1c1f27, #111826);
+      display: flex;
+      height: 100vh;
+      margin: 0;
+      color: #fff;
+    }
+
+    /* Left section */
+    .left-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-left: 8%;
+    }
+
+    .left-section h1 {
+      font-size: 40px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .left-section p {
+      font-size: 17px;
+      opacity: 0.8;
+      max-width: 420px;
+      line-height: 1.5;
+    }
+
+    /* Right section */
+    .right-section {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      background: rgba(255,255,255,0.1);
+      padding: 35px;
+      width: 360px;
+      border-radius: 14px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+      text-align: center;
+    }
+
+    h2 { margin-bottom: 20px; }
+
+    input {
+      width: 100%;
+      padding: 11px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 6px;
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 11px;
+      background: #4b6bff;
+      border: none;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 12px;
+      font-size: 16px;
+      transition: .3s;
+    }
+
+    button:hover { background: #3f5ae0; }
+
+    #otp-section { display: none; }
+
+    a {
+      color: #cdd9ff;
+      text-decoration: none;
+      display: block;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- LEFT SIDE UI -->
+  <div class="left-section">
+    <h1>College Event Management System</h1>
+    <p>Login to explore and register for campus events, workshops, fests, cultural and technical activities.</p>
+  </div>
+
+  <!-- RIGHT SIDE LOGIN BOX -->
+  <div class="right-section">
+    <div class="container">
+
+      <h2>Login</h2>
+
+      <div id="login-section">
+        <input type="email" id="email" placeholder="Email (@sru.edu.in)" />
+        <input type="password" id="password" placeholder="Password" />
+        <button onclick="startLogin()">Login</button>
+        <a href="register.html">New user? Register</a>
+       
+      </div>
+
+      <div id="otp-section">
+        <input type="text" id="otp-input" placeholder="Enter OTP" />
+        <button onclick="verifyOtp()">Verify OTP</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const API = "http://localhost:4000";
+    let currentEmail = "";
+
+    async function startLogin() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      if (!email || !password) return alert("Please fill all fields");
+
+      currentEmail = email;
+
+      const check = await fetch(`${API}/login-check`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      }).then(r => r.json());
+
+      if (!check.ok) return alert(check.error || "Login failed");
+
+      const sendOtp = await fetch(`${API}/request-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, type: "login" })
+      }).then(r => r.json());
+
+      if (!sendOtp.ok) return alert(sendOtp.error || "OTP error");
+
+      document.getElementById("login-section").style.display = "none";
+      document.getElementById("otp-section").style.display = "block";
+    }
+
+    async function verifyOtp() {
+      const otp = document.getElementById("otp-input").value.trim();
+      if (!otp) return alert("Enter OTP");
+
+      const result = await fetch(`${API}/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: currentEmail, otp })
+      }).then(r => r.json());
+
+      if (!result.ok) return alert(result.error || "Invalid OTP");
+
+      if (result.admin) {
+        window.location.href = "admin-dashboard.html";
+      } else {
+        window.location.href = "user-dashboard.html";
+      }
+    }
+  </script>
+
+</body>
+</html>

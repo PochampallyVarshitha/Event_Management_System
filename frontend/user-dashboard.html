@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SRU Event Portal</title>
+<style>
+/* SRU BRAND COLORS */
+:root {
+  --sru-dark: #0b2a55;
+  --glow: #8f48ff;
+  --glow-light: rgba(143, 72, 255, 0.3);
+  --card-bg: rgba(255,255,255,0.6);
+  --shadow: 0 8px 30px rgba(0,0,0,0.08);
+}
+
+/* RESET */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f3f6ff;
+  color: #222;
+}
+
+/* HEADER */
+header {
+  background: var(--sru-dark);
+  padding: 12px 25px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: white;
+}
+header .left {
+  display: flex;
+  align-items: center;
+  font-size: 20px;
+  font-weight: bold;
+}
+header img {
+  height: 45px;
+  margin-right: 12px;
+}
+header .right a {
+  color: white;
+  margin-left: 18px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+/* MAIN LAYOUT */
+.main {
+  padding: 25px;
+  display: flex;
+  gap: 25px;
+}
+
+/* LEFT EVENT LIST */
+.events-list {
+  flex: 1;
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  height: 450px;
+  overflow-y: auto;
+}
+
+/* EVENT CARD */
+.event-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 15px;
+  box-shadow: var(--shadow);
+  transition: 0.3s;
+}
+.event-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 30px var(--glow-light);
+}
+.event-card button {
+  background: var(--glow);
+  border: none;
+  padding: 7px 16px;
+  color: white;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.event-card button:hover {
+  box-shadow: 0 0 14px rgba(143,72,255,0.9);
+  transform: scale(1.05);
+}
+
+/* RIGHT SEARCH + UPCOMING PANEL */
+.search-card {
+  width: 350px;
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.search-card input, select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 7px;
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+}
+
+/* TABS */
+.tab {
+  flex: 1;
+  background: #d8d8d8;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.activeTab {
+  background: var(--glow);
+  color: white;
+  box-shadow: 0 0 12px var(--glow-light);
+}
+
+/* BOTTOM PANELS */
+.bottom-row {
+  display: flex;
+  gap: 25px;
+  padding: 0 25px 25px;
+}
+.section-card {
+  flex: 1;
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+footer {
+  background: var(--sru-dark);
+  color: white;
+  text-align: center;
+  padding: 10px;
+  margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="left">
+    <img src="logo.jpg"> SRU Event Portal
+  </div>
+  <div class="right">
+    <span id="username">Welcome User</span>
+    <a href="#">Logout</a>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- LEFT EVENT LIST -->
+  <div class="events-list" id="eventsList"></div>
+
+  <!-- RIGHT SEARCH + UPCOMING PANEL -->
+  <div class="search-card">
+
+    <h2>Search Events</h2>
+    <input type="text" id="searchInput" placeholder="Search events...">
+
+    <select id="categorySelect">
+      <option>All Categories</option>
+      <option>Technical</option>
+      <option>Cultural</option>
+      <option>Sports</option>
+    </select>
+
+    <input type="date" id="dateFilter">
+
+    <button onclick="applyFilter()">Search</button>
+    <button onclick="clearFilter()">Clear</button>
+
+    <hr>
+
+    <div style="display:flex; gap:10px; margin-top:10px;">
+      <button id="upcomingBtn" class="tab activeTab" onclick="showUpcoming()">Upcoming</button>
+      <button id="pastBtn" class="tab" onclick="showPast()">Past</button>
+    </div>
+
+    <div id="upcomingEventsList" style="margin-top:15px;"></div>
+
+  </div>
+</div>
+
+<!-- BOTTOM CARDS -->
+<div class="bottom-row">
+  <div class="section-card" id="favoritesCard"> <h3>Favorites</h3> </div>
+  <div class="section-card" id="registrationsCard"> <h3>My Registrations</h3> </div>
+</div>
+
+<footer>
+  © SR University — Event Portal
+</footer>
+
+
+<script>
+const events = [
+  {
+    title: "Yatra Expo",
+    date: "2025-10-31 09:30",
+    venue: "2nd block",
+    category: "Technical",
+    desc: "Explore the tech world!"
+  }
+];
+
+let favorites = [];
+let registrations = [];
+
+function renderEvents() {
+  const list = document.getElementById("eventsList");
+  list.innerHTML = "";
+  events.forEach((e, i) => {
+    list.innerHTML += `
+      <div class="event-card">
+        <h3>${e.title}</h3>
+        <p>${e.date} — ${e.venue}</p>
+        <p><b>${e.category}</b> — ${e.desc}</p>
+        <button onclick="registerEvent(${i})">Register</button>
+        <button onclick="toggleFavorite(${i})">❤️</button>
+      </div>`;
+  });
+}
+
+function toggleFavorite(i) {
+  if (!favorites.includes(events[i])) favorites.push(events[i]);
+  renderSidePanels();
+}
+
+function registerEvent(i) {
+  if (!registrations.includes(events[i])) registrations.push(events[i]);
+  renderSidePanels();
+}
+
+function renderSidePanels() {
+  document.getElementById("favoritesCard").innerHTML =
+    "<h3>Favorites</h3>" + favorites.map(e => `<p>${e.title}</p>`).join("");
+
+  document.getElementById("registrationsCard").innerHTML =
+    "<h3>My Registrations</h3>" + registrations.map(e => `<p>${e.title}</p>`).join("");
+}
+
+function showUpcoming() {
+  document.getElementById("upcomingBtn").classList.add("activeTab");
+  document.getElementById("pastBtn").classList.remove("activeTab");
+  renderUpcoming(true);
+}
+
+function showPast() {
+  document.getElementById("pastBtn").classList.add("activeTab");
+  document.getElementById("upcomingBtn").classList.remove("activeTab");
+  renderUpcoming(false);
+}
+
+function renderUpcoming(showUpcoming=true) {
+  const list = document.getElementById("upcomingEventsList");
+  list.innerHTML = "";
+
+  const today = new Date();
+
+  const filtered = events.filter(e =>
+    (showUpcoming ? new Date(e.date) >= today : new Date(e.date) < today)
+  );
+
+  if (filtered.length === 0) {
+    list.innerHTML = "<p>No events found.</p>";
+    return;
+  }
+
+  filtered.forEach(e => {
+    list.innerHTML += `<p>• ${e.title} (${e.date})</p>`;
+  });
+}
+
+renderEvents();
+renderSidePanels();
+renderUpcoming(true);
+</script>
+
+</body>
+</html>
