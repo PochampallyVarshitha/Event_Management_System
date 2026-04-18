@@ -1,4 +1,5 @@
 // server.js
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -31,6 +32,15 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+});
+
+// Verify SMTP connection on startup
+transporter.verify((error, success) => {
+  if (error) {
+    console.error('SMTP connection failed:', error);
+  } else {
+    console.log('SMTP server is ready to send emails');
+  }
 });
 
 // In-memory OTP & verified maps (short lived). Good enough for demo.
@@ -69,12 +79,34 @@ async function sendOtpEmail(to, code, purpose = 'Login/Verification') {
       <small>If you didn't request this, ignore this email.</small>
     </div>
   `;
-  return transporter.sendMail({
-    from: process.env.FROM_EMAIL || process.env.SMTP_USER,
-    to,
-    subject: `Your OTP for College Event System`,
-    html,
+
+  console.log('Attempting to send OTP email to:', to);
+  console.log('SMTP config:', {
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    secure: process.env.SMTP_SECURE === 'true',
+    user: process.env.SMTP_USER ? '***' : 'NOT SET',
+    pass: process.env.SMTP_PASS ? '***' : 'NOT SET'
   });
+
+  try {
+    const result = await transporter.sendMail({
+      from: process.env.SMTP_USER, // Use just the email address, not display name
+      to,
+      subject: `Your OTP for College Event System`,
+      html,
+      headers: {
+        'X-Priority': '1',
+        'X-MSMail-Priority': 'High',
+        'Importance': 'High'
+      }
+    });
+    console.log('Email sent successfully:', result.messageId);
+    return result;
+  } catch (err) {
+    console.error('Email sending failed:', err);
+    throw err;
+  }
 }
 
 // Clean expired entries periodically
@@ -113,10 +145,10 @@ app.post('/request-otp', async (req, res) => {
   try {
     await sendOtpEmail(key, code, type === 'register' ? 'Registration' : 'Login');
     return res.json({ ok: true, message: 'OTP sent (check your email).' });
-  } catch (err) {
-    console.error('sendOtp error', err && err.message);
-    return res.status(500).json({ error: 'Failed to send OTP email (server error).' });
-  }
+  }catch (err) {
+  console.error('FULL ERROR:', err);
+  return res.status(500).json({ error: 'Failed to send OTP email' });
+}
 });
 
 // Verify OTP

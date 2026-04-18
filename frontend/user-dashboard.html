@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>SRU Event Portal</title>
 <style>
-/* SRU BRAND COLORS */
+
 :root {
   --sru-dark: #0b2a55;
   --glow: #8f48ff;
@@ -156,7 +156,7 @@ footer {
   </div>
   <div class="right">
     <span id="username">Welcome User</span>
-    <a href="#">Logout</a>
+    <a href="C:/Users/VARSHITHA/OneDrive/Desktop/Event-Management/frontend/index.html">Logout</a>
   </div>
 </header>
 
@@ -207,28 +207,42 @@ footer {
 
 
 <script>
-const events = [
-  {
-    title: "Yatra Expo",
-    date: "2025-10-31 09:30",
-    venue: "2nd block",
-    category: "Technical",
-    desc: "Explore the tech world!"
-  }
-];
-
+const API = "http://localhost:4000";
+let events = [];
 let favorites = [];
 let registrations = [];
+
+async function loadEvents() {
+  const res = await fetch(`${API}/events`);
+  const data = await res.json();
+
+  if (!data.ok) {
+    alert("Failed to fetch events");
+    return;
+  }
+
+  events = data.events;
+  renderEvents();
+  renderSidePanels();
+  renderUpcoming(true);
+}
 
 function renderEvents() {
   const list = document.getElementById("eventsList");
   list.innerHTML = "";
+
+  if (events.length === 0) {
+    list.innerHTML = "<p>No events available</p>";
+    return;
+  }
+
   events.forEach((e, i) => {
     list.innerHTML += `
       <div class="event-card">
         <h3>${e.title}</h3>
         <p>${e.date} — ${e.venue}</p>
-        <p><b>${e.category}</b> — ${e.desc}</p>
+        <p><b>${e.category}</b> — ${e.description}</p>
+
         <button onclick="registerEvent(${i})">Register</button>
         <button onclick="toggleFavorite(${i})">❤️</button>
       </div>`;
@@ -236,21 +250,27 @@ function renderEvents() {
 }
 
 function toggleFavorite(i) {
-  if (!favorites.includes(events[i])) favorites.push(events[i]);
+  if (!favorites.includes(events[i])) {
+    favorites.push(events[i]);
+  }
   renderSidePanels();
 }
 
 function registerEvent(i) {
-  if (!registrations.includes(events[i])) registrations.push(events[i]);
+  if (!registrations.includes(events[i])) {
+    registrations.push(events[i]);
+  }
   renderSidePanels();
 }
 
 function renderSidePanels() {
   document.getElementById("favoritesCard").innerHTML =
-    "<h3>Favorites</h3>" + favorites.map(e => `<p>${e.title}</p>`).join("");
+    "<h3>Favorites</h3>" +
+    favorites.map(e => `<p>• ${e.title}</p>`).join("");
 
   document.getElementById("registrationsCard").innerHTML =
-    "<h3>My Registrations</h3>" + registrations.map(e => `<p>${e.title}</p>`).join("");
+    "<h3>My Registrations</h3>" +
+    registrations.map(e => `<p>• ${e.title}</p>`).join("");
 }
 
 function showUpcoming() {
@@ -265,14 +285,14 @@ function showPast() {
   renderUpcoming(false);
 }
 
-function renderUpcoming(showUpcoming=true) {
+function renderUpcoming(showUpcoming = true) {
   const list = document.getElementById("upcomingEventsList");
   list.innerHTML = "";
 
   const today = new Date();
 
   const filtered = events.filter(e =>
-    (showUpcoming ? new Date(e.date) >= today : new Date(e.date) < today)
+    showUpcoming ? new Date(e.date) >= today : new Date(e.date) < today
   );
 
   if (filtered.length === 0) {
@@ -285,9 +305,44 @@ function renderUpcoming(showUpcoming=true) {
   });
 }
 
-renderEvents();
-renderSidePanels();
-renderUpcoming(true);
+function applyFilter() {
+  const text = document.getElementById("searchInput").value.toLowerCase();
+  const category = document.getElementById("categorySelect").value;
+  const date = document.getElementById("dateFilter").value;
+
+  const filtered = events.filter(e => {
+    return (
+      (text ? e.title.toLowerCase().includes(text) : true) &&
+      (category !== "All Categories" ? e.category === category : true) &&
+      (date ? e.date === date : true)
+    );
+  });
+
+  const list = document.getElementById("eventsList");
+  list.innerHTML = "";
+
+  filtered.forEach((e, i) => {
+    list.innerHTML += `
+      <div class="event-card">
+        <h3>${e.title}</h3>
+        <p>${e.date} — ${e.venue}</p>
+        <p><b>${e.category}</b> — ${e.description}</p>
+        <button onclick="registerEvent(${i})">Register</button>
+        <button onclick="toggleFavorite(${i})">❤️</button>
+      </div>`;
+  });
+}
+
+function clearFilter() {
+  document.getElementById("searchInput").value = "";
+  document.getElementById("categorySelect").value = "All Categories";
+  document.getElementById("dateFilter").value = "";
+  renderEvents();
+}
+
+// FIRST LOAD
+loadEvents();
+
 </script>
 
 </body>
