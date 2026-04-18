@@ -1,0 +1,35 @@
+name: Build
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      # Backend setup
+      - name: Install Backend Dependencies
+        run: |
+          cd backend
+          npm install
+
+      - name: Run Backend
+        run: |
+          cd backend
+          node server.js &
+
+      # Frontend setup (HTML based)
+      - name: Check Frontend Files
+        run: |
+          cd frontend
+          ls
